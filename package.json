@@ -11,7 +11,7 @@
   "dependencies": {
     "node-fetch": "^2.2.0",
     "p-event": "^2.1.0",
-    "set-immediate-promise": "^1.0.7",
+    "p-immediate": "^2.1.0",
     "yauzl": "^2.10.0"
   },
   "devDependencies": {
