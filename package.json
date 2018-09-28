@@ -1,0 +1,21 @@
+{
+  "name": "tapalcatl",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Seth Fitzsimmons <seth@mojodna.net>",
+  "license": "ISC",
+  "dependencies": {
+    "node-fetch": "^2.2.0",
+    "p-event": "^2.1.0",
+    "set-immediate-promise": "^1.0.7",
+    "yauzl": "^2.10.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.6.0",
+    "jest": "^23.6.0"
+  }
+}
