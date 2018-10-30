@@ -15,6 +15,7 @@
     "p-event": "^2.1.0",
     "p-immediate": "^2.1.0",
     "p-map": "^2.0.0",
+    "stream-to-array": "^2.3.0",
     "tmp-promise": "^1.0.5",
     "yauzl": "^2.10.0"
   },

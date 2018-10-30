@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
+const toArray = require("stream-to-array");
+
 const tapalcatl = require(".");
 
 const ARCHIVE_FIXTURE = "test/fixtures/4_9_9.zip";
@@ -51,7 +53,9 @@ describe("HTTP archives", () => {
   test("it reads tiles", async () => {
     const { body } = await archive.getTile(7, 75, 74);
 
-    expect(body).toEqual(TILE_FIXTURE);
+    const buf = Buffer.concat(await toArray(body));
+
+    expect(buf).toEqual(TILE_FIXTURE);
   });
 
   test("it reads headers for tiles", async () => {
@@ -71,7 +75,7 @@ describe("HTTP archives", () => {
   });
 
   test("it defaults to headers from metadata", async () => {
-    const { headers, body } = await archive.getTile(7, 75, 74);
+    const { headers } = await archive.getTile(7, 75, 74);
 
     expect(headers).toEqual(DEFAULT_HEADERS);
   });
@@ -111,9 +115,11 @@ describe("local archives", () => {
   });
 
   test("it reads tiles", async () => {
-    const { headers, body } = await archive.getTile(7, 75, 74);
+    const { body } = await archive.getTile(7, 75, 74);
 
-    expect(body).toEqual(TILE_FIXTURE);
+    const buf = Buffer.concat(await toArray(body));
+
+    expect(buf).toEqual(TILE_FIXTURE);
   });
 
   test("it reads headers for tiles", async () => {
@@ -124,10 +130,10 @@ describe("local archives", () => {
       { ETag: "3656453970" },
       DEFAULT_HEADERS[2]
     ]);
-      // TODO update the fixture to include additional headers
-      // {
-      //   "X-Something": "hello"
-      // }
+    // TODO update the fixture to include additional headers
+    // {
+    //   "X-Something": "hello"
+    // }
   });
 
   test("it defaults to headers from metadata", async () => {
@@ -163,7 +169,9 @@ describe("S3 archives", () => {
   test("it reads tiles", async () => {
     const { body } = await archive.getTile(7, 75, 74);
 
-    expect(body).toEqual(TILE_FIXTURE);
+    const buf = Buffer.concat(await toArray(body));
+
+    expect(buf).toEqual(TILE_FIXTURE);
   });
 
   test("it reads headers for tiles", async () => {
