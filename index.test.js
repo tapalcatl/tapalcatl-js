@@ -13,6 +13,18 @@ const TILE_FIXTURE = fs.readFileSync("test/fixtures/7_75_74.tif");
 // TODO bbox should be bounds
 const META_FIXTURE = require("./test/fixtures/lc_meta.json");
 
+const DEFAULT_HEADERS = [
+  {
+    "Content-Type": "image/tiff"
+  },
+  {
+    ETag: "486160910"
+  },
+  {
+    "Last-Modified": "Tue, 30 Oct 2018 02:00:54 GMT"
+  }
+];
+
 describe("HTTP archives", () => {
   let archive;
 
@@ -46,9 +58,11 @@ describe("HTTP archives", () => {
     const { headers } = await archive.getTile(7, 75, 75);
 
     expect(headers).toEqual([
+      DEFAULT_HEADERS[0],
       {
-        "Content-Type": "image/tiff"
-      }
+        ETag: "3656453970"
+      },
+      DEFAULT_HEADERS[2]
       // TODO update the fixture to include additional headers
       // {
       //   "X-Something": "hello"
@@ -59,11 +73,7 @@ describe("HTTP archives", () => {
   test("it defaults to headers from metadata", async () => {
     const { headers, body } = await archive.getTile(7, 75, 74);
 
-    expect(headers).toEqual([
-      {
-        "Content-Type": "image/tiff"
-      }
-    ]);
+    expect(headers).toEqual(DEFAULT_HEADERS);
   });
 
   test("it returns empty data for nonexistent tiles", async () => {
@@ -110,24 +120,20 @@ describe("local archives", () => {
     const { headers } = await archive.getTile(7, 75, 75);
 
     expect(headers).toEqual([
-      {
-        "Content-Type": "image/tiff"
-      }
+      DEFAULT_HEADERS[0],
+      { ETag: "3656453970" },
+      DEFAULT_HEADERS[2]
+    ]);
       // TODO update the fixture to include additional headers
       // {
       //   "X-Something": "hello"
       // }
-    ]);
   });
 
   test("it defaults to headers from metadata", async () => {
     const { headers } = await archive.getTile(7, 75, 74);
 
-    expect(headers).toEqual([
-      {
-        "Content-Type": "image/tiff"
-      }
-    ]);
+    expect(headers).toEqual(DEFAULT_HEADERS);
   });
 
   test("it returns empty data for nonexistent tiles", async () => {
@@ -163,11 +169,7 @@ describe("S3 archives", () => {
   test("it reads headers for tiles", async () => {
     const { headers } = await archive.getTile(7, 75, 74);
 
-    expect(headers).toEqual([
-      {
-        "Content-Type": "image/tiff"
-      }
-    ]);
+    expect(headers).toEqual(DEFAULT_HEADERS);
   });
 
   test("it returns empty data for nonexistent tiles", async () => {
