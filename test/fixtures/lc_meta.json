@@ -1,0 +1,1 @@
+{"name": "Land Cover", "description": "Unified land cover, derived from MODIS-LC, ESACCI-LC, NLCD, and C-CAP.", "minzoom": 4, "maxzoom": 7, "bbox": [22.5, -40.97989806962013, 45.0, -21.943045533438177], "formats": {"tif": "image/tiff"}, "root": "4/9/9"}

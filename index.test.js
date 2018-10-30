@@ -1,123 +1,99 @@
+const fs = require("fs");
 const path = require("path");
 
 const tapalcatl = require(".");
 
-const TILE_FIXTURE = "test/fixtures/tile.zip";
-const HTTP_TILE_FIXTURE =
-  "http://mojodna.s3.amazonaws.com/tapalcatl-fixtures/tile.zip";
-const HTTPS_TILE_FIXTURE =
-  "https://mojodna.s3.amazonaws.com/tapalcatl-fixtures/tile.zip";
-
-describe("archives", () => {
-  test("it tracks extensions", async () => {
-    const archive = await tapalcatl(TILE_FIXTURE, "txt");
-
-    expect(archive.extension).toBe("txt");
-  });
-
-  test("it skips extensions when omitted", async () => {
-    const archive = await tapalcatl(TILE_FIXTURE);
-
-    expect(archive.extension).toBe("");
-  });
-});
+const ARCHIVE_FIXTURE = "test/fixtures/4_9_9.zip";
+const HTTP_ARCHIVE_FIXTURE =
+  "http://mojodna.s3.amazonaws.com/tapalcatl-fixtures/4_9_9.zip";
+const HTTPS_ARCHIVE_FIXTURE =
+  "https://mojodna.s3.amazonaws.com/tapalcatl-fixtures/4_9_9.zip";
+const S3_ARCHIVE_FIXTURE = "s3://mojodna-temp/lc/4/9/9.zip";
+const TILE_FIXTURE = fs.readFileSync("test/fixtures/7_75_74.tif");
+// TODO bbox should be bounds
+const META_FIXTURE = require("./test/fixtures/lc_meta.json");
 
 describe("HTTP archives", () => {
-  test("it recognizes remote (HTTP) files", async () => {
-    const archive = await tapalcatl(HTTP_TILE_FIXTURE);
+  let archive;
 
-    expect(archive.source).toEqual(HTTP_TILE_FIXTURE);
+  beforeAll(async () => {
+    archive = await tapalcatl(HTTP_ARCHIVE_FIXTURE);
+  });
+
+  afterAll(() => archive.close());
+
+  test("it recognizes remote (HTTP) files", () => {
+    expect(archive.source).toEqual(HTTP_ARCHIVE_FIXTURE);
   });
 
   test("it recognizes remote (HTTPS) files", async () => {
-    const archive = await tapalcatl(HTTPS_TILE_FIXTURE);
+    const archive = await tapalcatl(HTTPS_ARCHIVE_FIXTURE);
 
-    expect(archive.source).toEqual(HTTPS_TILE_FIXTURE);
+    expect(archive.source).toEqual(HTTPS_ARCHIVE_FIXTURE);
   });
 
-  test("it reads metadata", async () => {
-    const archive = await tapalcatl(HTTP_TILE_FIXTURE, "txt");
-
-    expect(archive.metadata).toEqual({
-      headers: [
-        {
-          "Content-Type": "text/plain"
-        }
-      ]
-    });
+  test("it reads metadata", () => {
+    expect(archive.metadata).toEqual(META_FIXTURE);
   });
 
   test("it reads tiles", async () => {
-    const archive = await tapalcatl(HTTP_TILE_FIXTURE, "txt");
+    const { body } = await archive.getTile(7, 75, 74);
 
-    const { headers, body } = await archive.getTile(0, 0, 0);
-
-    expect(body.toString()).toEqual("0\n");
+    expect(body).toEqual(TILE_FIXTURE);
   });
 
   test("it reads headers for tiles", async () => {
-    const archive = await tapalcatl(HTTP_TILE_FIXTURE, "txt");
+    const { headers } = await archive.getTile(7, 75, 75);
 
-    const { headers, body } = await archive.getTile(0, 0, 0);
-
-    // TODO should this be an array of objects (to support duplicate header keys) or an object?
     expect(headers).toEqual([
       {
-        "Content-Type": "text/plain"
-      },
-      {
-        "X-Something": "hello"
+        "Content-Type": "image/tiff"
       }
+      // TODO update the fixture to include additional headers
+      // {
+      //   "X-Something": "hello"
+      // }
     ]);
   });
 
   test("it defaults to headers from metadata", async () => {
-    const archive = await tapalcatl(HTTP_TILE_FIXTURE, "txt");
-
-    const { headers, body } = await archive.getTile(0, 0, 1);
+    const { headers, body } = await archive.getTile(7, 75, 74);
 
     expect(headers).toEqual([
       {
-        "Content-Type": "text/plain"
+        "Content-Type": "image/tiff"
       }
     ]);
-    expect(body.toString()).toEqual("1\n");
   });
 
   test("it returns empty data for nonexistent tiles", async () => {
-    const archive = await tapalcatl(HTTP_TILE_FIXTURE, "txt");
-
-    const tile = await archive.getTile(1, 0, 0);
+    const tile = await archive.getTile(0, 0, 0);
 
     expect(tile).toBeNull;
   });
 });
 
 describe("local archives", () => {
-  test("it reads local files", async () => {
-    const archive = await tapalcatl(`file://${path.resolve(TILE_FIXTURE)}`);
+  let archive;
 
+  beforeAll(async () => {
+    archive = await tapalcatl(`file://${path.resolve(ARCHIVE_FIXTURE)}`);
+  });
+
+  afterAll(() => archive.close());
+
+  test("it reads local files", () => {
     expect(archive.source).toMatch(/^file:\/\/\/\w/);
   });
 
-  test("it handles paths without protocols as local files", async () => {
-    const archive = await tapalcatl(TILE_FIXTURE);
-
+  test("it handles paths without protocols as local files", () => {
     expect(archive.source).toMatch(/^file:\/\/\/\w/);
   });
 
   test("it reads metadata", async () => {
-    const archive = await tapalcatl(TILE_FIXTURE, "txt");
-
     const metadata = archive.metadata;
 
-    expect(metadata).toEqual({
-      headers: [
-        {
-          "Content-Type": "text/plain"
-        }
-      ]
-    });
+    expect(metadata).toEqual(META_FIXTURE);
   });
 
   test("it fails on malformed metadata", async () => {
@@ -125,47 +101,78 @@ describe("local archives", () => {
   });
 
   test("it reads tiles", async () => {
-    const archive = await tapalcatl(TILE_FIXTURE, "txt");
+    const { headers, body } = await archive.getTile(7, 75, 74);
 
-    const { headers, body } = await archive.getTile(0, 0, 0);
-
-    expect(body.toString()).toEqual("0\n");
+    expect(body).toEqual(TILE_FIXTURE);
   });
 
   test("it reads headers for tiles", async () => {
-    const archive = await tapalcatl(TILE_FIXTURE, "txt");
+    const { headers } = await archive.getTile(7, 75, 75);
 
-    const { headers, body } = await archive.getTile(0, 0, 0);
-
-    // TODO should this be an array of objects (to support duplicate header keys) or an object?
     expect(headers).toEqual([
       {
-        "Content-Type": "text/plain"
-      },
-      {
-        "X-Something": "hello"
+        "Content-Type": "image/tiff"
       }
+      // TODO update the fixture to include additional headers
+      // {
+      //   "X-Something": "hello"
+      // }
     ]);
   });
 
   test("it defaults to headers from metadata", async () => {
-    const archive = await tapalcatl(TILE_FIXTURE, "txt");
-
-    const { headers, body } = await archive.getTile(0, 0, 1);
+    const { headers } = await archive.getTile(7, 75, 74);
 
     expect(headers).toEqual([
       {
-        "Content-Type": "text/plain"
+        "Content-Type": "image/tiff"
       }
     ]);
-    expect(body.toString()).toEqual("1\n");
   });
 
   test("it returns empty data for nonexistent tiles", async () => {
-    const archive = await tapalcatl(TILE_FIXTURE, "txt");
-
-    const tile = await archive.getTile(1, 0, 0);
+    const tile = await archive.getTile(0, 0, 0);
 
     expect(tile).toBeNull();
+  });
+});
+
+describe("S3 archives", () => {
+  let archive;
+
+  beforeAll(async () => {
+    archive = await tapalcatl(S3_ARCHIVE_FIXTURE);
+  });
+
+  afterAll(() => archive.close());
+
+  test("it recognizes remote (S3) archives", () => {
+    expect(archive.source).toEqual(S3_ARCHIVE_FIXTURE);
+  });
+
+  test("it reads metadata", () => {
+    expect(archive.metadata).toEqual(META_FIXTURE);
+  });
+
+  test("it reads tiles", async () => {
+    const { body } = await archive.getTile(7, 75, 74);
+
+    expect(body).toEqual(TILE_FIXTURE);
+  });
+
+  test("it reads headers for tiles", async () => {
+    const { headers } = await archive.getTile(7, 75, 74);
+
+    expect(headers).toEqual([
+      {
+        "Content-Type": "image/tiff"
+      }
+    ]);
+  });
+
+  test("it returns empty data for nonexistent tiles", async () => {
+    const tile = await archive.getTile(0, 0, 0);
+
+    expect(tile).toBeNull;
   });
 });
