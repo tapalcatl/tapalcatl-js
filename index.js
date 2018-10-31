@@ -48,8 +48,7 @@ async function _loadArchive(source, blockSize) {
 
   switch (uri.protocol) {
     case "file:": {
-      // TODO this is wrong
-      const zip = await open(uri.pathname);
+      const zip = await open(path.resolve(path.join(uri.hostname, uri.pathname)));
       return new Archive(source, zip);
     }
 
@@ -81,8 +80,7 @@ async function _loadMeta(source) {
 
   switch (uri.protocol) {
     case "file:":
-      // TODO this is wrong
-      return JSON.parse(await fs.readFile(uri.pathname, "utf-8"));
+      return await fs.readJSON(path.resolve(path.join(uri.hostname, uri.pathname)), "utf-8");
 
     case "http:":
     case "https:":

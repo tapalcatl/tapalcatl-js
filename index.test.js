@@ -98,6 +98,14 @@ describe("local archives", () => {
     expect(archive.source).toMatch(/^file:\/\/\/\w/);
   });
 
+  test("it reads local files with relative paths", async () => {
+    const uri = `file://./${ARCHIVE_FIXTURE}`;
+
+    const archive = await tapalcatl.archive(uri);
+
+    expect(archive.source).toEqual(uri);
+  });
+
   test("it handles paths without protocols as local files", () => {
     expect(archive.source).toMatch(/^file:\/\/\/\w/);
   });
