@@ -21,8 +21,6 @@ const lockedLoad = lockingCache({
 });
 
 process.on("exit", code => {
-  console.log("exiting with", code)
-
   lockedLoad.cache.forEach(v => v[0].close());
 });
 
