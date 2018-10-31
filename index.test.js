@@ -12,7 +12,6 @@ const HTTPS_ARCHIVE_FIXTURE =
   "https://mojodna.s3.amazonaws.com/tapalcatl-fixtures/4_9_9.zip";
 const S3_ARCHIVE_FIXTURE = "s3://mojodna/tapalcatl-fixtures/4_9_9.zip";
 const TILE_FIXTURE = fs.readFileSync("test/fixtures/7_75_74.tif");
-// TODO bbox should be bounds
 const META_FIXTURE = require("./test/fixtures/lc_meta.json");
 
 const DEFAULT_HEADERS = [
@@ -23,7 +22,7 @@ const DEFAULT_HEADERS = [
     ETag: "486160910"
   },
   {
-    "Last-Modified": "Tue, 30 Oct 2018 02:00:54 GMT"
+    "Last-Modified": "Thu, 01 Nov 2018 02:10:26 GMT"
   }
 ];
 
