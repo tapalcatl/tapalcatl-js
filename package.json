@@ -9,10 +9,12 @@
   "author": "Seth Fitzsimmons <seth@mojodna.net>",
   "license": "ISC",
   "dependencies": {
+    "@mapbox/sphericalmercator": "^1.1.0",
     "aws-sdk": "^2.344.0",
+    "fs-extra": "^7.0.0",
+    "locking-cache": "^0.4.1",
     "lru-cache": "^4.1.3",
     "node-fetch": "^2.2.0",
-    "p-event": "^2.1.0",
     "p-immediate": "^2.1.0",
     "p-map": "^2.0.0",
     "stream-to-array": "^2.3.0",

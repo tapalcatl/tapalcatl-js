@@ -31,17 +31,15 @@ describe("HTTP archives", () => {
   let archive;
 
   beforeAll(async () => {
-    archive = await tapalcatl(HTTP_ARCHIVE_FIXTURE);
+    archive = await tapalcatl.archive(HTTP_ARCHIVE_FIXTURE);
   });
-
-  afterAll(() => archive.close());
 
   test("it recognizes remote (HTTP) files", () => {
     expect(archive.source).toEqual(HTTP_ARCHIVE_FIXTURE);
   });
 
   test("it recognizes remote (HTTPS) files", async () => {
-    const archive = await tapalcatl(HTTPS_ARCHIVE_FIXTURE);
+    const archive = await tapalcatl.archive(HTTPS_ARCHIVE_FIXTURE);
 
     expect(archive.source).toEqual(HTTPS_ARCHIVE_FIXTURE);
   });
@@ -91,10 +89,10 @@ describe("local archives", () => {
   let archive;
 
   beforeAll(async () => {
-    archive = await tapalcatl(`file://${path.resolve(ARCHIVE_FIXTURE)}`);
+    archive = await tapalcatl.archive(
+      `file://${path.resolve(ARCHIVE_FIXTURE)}`
+    );
   });
-
-  afterAll(() => archive.close());
 
   test("it reads local files", () => {
     expect(archive.source).toMatch(/^file:\/\/\/\w/);
@@ -153,10 +151,8 @@ describe("S3 archives", () => {
   let archive;
 
   beforeAll(async () => {
-    archive = await tapalcatl(S3_ARCHIVE_FIXTURE);
+    archive = await tapalcatl.archive(S3_ARCHIVE_FIXTURE);
   });
-
-  afterAll(() => archive.close());
 
   test("it recognizes remote (S3) archives", () => {
     expect(archive.source).toEqual(S3_ARCHIVE_FIXTURE);
@@ -184,5 +180,41 @@ describe("S3 archives", () => {
     const tile = await archive.getTile(0, 0, 0);
 
     expect(tile).toBeNull;
+  });
+});
+
+describe("remote metadata", () => {
+  const source = tapalcatl("s3://mojodna-temp/lc/meta.json");
+
+  describe("meta", () => {
+    let meta;
+
+    beforeAll(async () => {
+      meta = await source.meta();
+    });
+
+    test("meta includes a name", async () => {
+      expect(meta.name).toEqual("Land Cover");
+    });
+  });
+
+  test("getTile", async () => {
+    const { body } = await source.getTile(7, 75, 74);
+
+    const buf = Buffer.concat(await toArray(body));
+
+    expect(buf).toEqual(TILE_FIXTURE);
+  });
+
+  test("getTile out of zoom range", async () => {
+    const tile = await source.getTile(10, 75, 74);
+
+    expect(tile).toBe(null);
+  });
+
+  test("getTile out of bounds", async () => {
+    const tile = await source.getTile(4, -10, 10);
+
+    expect(tile).toBe(null);
   });
 });
