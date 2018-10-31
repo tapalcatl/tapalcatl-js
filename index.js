@@ -21,7 +21,7 @@ const lockedLoad = lockingCache({
 });
 
 process.on("exit", code => {
-  lockedLoad.cache.forEach(v => v[0].close());
+  lockedLoad.cache.forEach(v => v[0].close && v[0].close());
 });
 
 const openZip = util.promisify(yauzl.open.bind(yauzl));
