@@ -10,7 +10,7 @@ const HTTP_ARCHIVE_FIXTURE =
   "http://mojodna.s3.amazonaws.com/tapalcatl-fixtures/4_9_9.zip";
 const HTTPS_ARCHIVE_FIXTURE =
   "https://mojodna.s3.amazonaws.com/tapalcatl-fixtures/4_9_9.zip";
-const S3_ARCHIVE_FIXTURE = "s3://mojodna-temp/lc/4/9/9.zip";
+const S3_ARCHIVE_FIXTURE = "s3://mojodna/tapalcatl-fixtures/4_9_9.zip";
 const TILE_FIXTURE = fs.readFileSync("test/fixtures/7_75_74.tif");
 // TODO bbox should be bounds
 const META_FIXTURE = require("./test/fixtures/lc_meta.json");

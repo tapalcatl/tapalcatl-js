@@ -159,10 +159,25 @@ class Source {
     return this._meta;
   }
 
-  async getTile(zoom, x, y, format = null) {
+  async getTile(zoom, x, y, { format = null, scale = null } = {}) {
     await this._open();
 
-    const { bounds, maxzoom, materializedZooms, minzoom } = this._meta;
+    const {
+      bounds,
+      maxscale,
+      maxzoom,
+      materializedZooms,
+      minscale,
+      minzoom
+    } = this._meta;
+    let { metatile } = this._meta;
+
+    metatile = metatile || 1;
+
+    // if only 1 scale is present, default to that
+    if (minscale === maxscale) {
+      scale = scale || minscale || 1;
+    }
 
     // validate zooms
     if (zoom < minzoom || zoom > maxzoom) {
@@ -183,8 +198,10 @@ class Source {
       .reverse()
       .find(z => z <= zoom);
     const dz = zoom - mz;
-    const mx = x >> dz;
-    const my = y >> dz;
+    let mx = x >> dz;
+    let my = y >> dz;
+    mx -= mx % metatile;
+    my -= my % metatile;
 
     const archive = await loadArchive(
       this._meta.source
@@ -193,7 +210,7 @@ class Source {
         .replace("{y}", my)
     );
 
-    return archive.getTile(zoom, x, y, format);
+    return archive.getTile(zoom, x, y, { format, scale });
   }
 }
 
