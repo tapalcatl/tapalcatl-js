@@ -204,10 +204,13 @@ class Source {
     my -= my % metatile;
 
     const archive = await loadArchive(
-      this._meta.source
-        .replace("{z}", mz)
-        .replace("{x}", mx)
-        .replace("{y}", my)
+      url.resolve(
+        this.source,
+        this._meta.source
+          .replace("{z}", mz)
+          .replace("{x}", mx)
+          .replace("{y}", my)
+      )
     );
 
     return archive.getTile(zoom, x, y, { format, scale });
