@@ -190,7 +190,7 @@ describe("S3 archives", () => {
   });
 });
 
-describe("remote metadata", () => {
+describe("Source", () => {
   const source = tapalcatl("s3://mojodna-temp/lc/meta.json");
 
   describe("meta", () => {
