@@ -1,8 +1,9 @@
-const fs = require("fs");
 const path = require("path");
 
+const fs = require("fs-extra");
 const toArray = require("stream-to-array");
 
+const WritableArchive = require("./lib/writable_archive");
 const tapalcatl = require(".");
 
 const ARCHIVE_FIXTURE = "test/fixtures/4_9_9.zip";
@@ -11,7 +12,8 @@ const HTTP_ARCHIVE_FIXTURE =
 const HTTPS_ARCHIVE_FIXTURE =
   "https://mojodna.s3.amazonaws.com/tapalcatl-fixtures/4_9_9.zip";
 const S3_ARCHIVE_FIXTURE = "s3://mojodna/tapalcatl-fixtures/4_9_9.zip";
-const TILE_FIXTURE = fs.readFileSync("test/fixtures/7_75_74.tif");
+const TILE_FILENAME = "test/fixtures/7_75_74.tif";
+const TILE_FIXTURE = fs.readFileSync(TILE_FILENAME);
 const META_FIXTURE = require("./test/fixtures/lc_meta.json");
 
 const DEFAULT_HEADERS = [
@@ -225,3 +227,167 @@ describe("Source", () => {
     expect(tile).toBe(null);
   });
 });
+
+describe("Writable Archive", () => {
+  const archiveName = "./test/test.zip";
+  let archive;
+
+  beforeAll(async () => {
+    // TODO how do options fit in?
+    const writableArchive = new WritableArchive(4, 9, 9, `file://${archiveName}`, {
+      formats: {
+        "tif": "image/tiff"
+      },
+      maxzoom: 7
+    });
+
+    writableArchive.addTile(7, 75, 74, TILE_FIXTURE);
+    fs.createReadStream(TILE_FILENAME).pipe(writableArchive.addTile(7, 75, 75));
+    writableArchive.addTile(7, 75, 76, fs.createReadStream(TILE_FILENAME));
+    writableArchive.addTile(7, 75, 77, "tile");
+    writableArchive.addTile(7, 75, 78, {
+      tile: true
+    });
+
+    await writableArchive.close();
+
+    archive = await tapalcatl.archive(archiveName);
+  });
+
+  afterAll(async () => {
+    await fs.unlink(archiveName);
+  });
+
+  describe("metadata", () => {
+    test("requires at least one format", () => {
+      try {
+        new WritableArchive(4, 9, 9, `file:///tmp/tapalcatl.zip`, {
+        });
+      } catch (err) {
+        return;
+      }
+
+      fail();
+    })
+
+    test("defaults `minzoom` to the root", () => {
+      expect(archive.metadata.minzoom).toEqual(4);
+    });
+
+    test("sets `root` to the root coordinates", () => {
+      expect(archive.metadata.root).toEqual("4/9/9");
+    })
+
+    test("sets `formats`", () => {
+      expect(archive.metadata.formats).toEqual({
+        "tif": "image/tiff"
+      });
+    });
+
+    test("minzoom must be <= maxzoom", () => {
+      try {
+        new WritableArchive(4, 9, 9, `file:///tmp/tapalcatl.zip`, {
+          formats: {
+            "tif": "image/tiff"
+          },
+          minzoom: 4,
+          maxzoom: 3
+        });
+      } catch (err) {
+        return;
+      }
+
+      fail();
+    })
+  });
+
+  describe("addTile", () => {
+    test("zoom must be within range", () => {
+      const writableArchive = new WritableArchive(4, 9, 9, `file:///tmp/tapalcatl.zip`, {
+        formats: {
+          "tif": "image/tiff"
+        },
+        maxzoom: 7
+      });
+
+      try {
+        writableArchive.addTile(3, 0, 0, TILE_FIXTURE);
+      } catch (err) {
+        return;
+      }
+
+      fail();
+    })
+
+    test("coordinates must be within range", () => {
+      const writableArchive = new WritableArchive(4, 9, 9, `file:///tmp/tapalcatl.zip`, {
+        formats: {
+          "tif": "image/tiff"
+        },
+        maxzoom: 7
+      });
+
+      try {
+        writableArchive.addTile(4, 8, 9, TILE_FIXTURE);
+      } catch (err) {
+        return;
+      }
+
+      fail();
+    })
+  })
+
+  test("creates a zip", async () => {
+    expect(await fs.exists("./test/test.zip")).toBe(true);
+  });
+
+  test("creates an archive", () => {
+    expect(archive).not.toBeNull();
+  });
+
+  test("includes a tile written as a Buffer", async () => {
+    const { body } = await archive.getTile(7, 75, 74);
+
+    const buf = Buffer.concat(await toArray(body));
+
+    expect(buf).toEqual(TILE_FIXTURE);
+  })
+
+  test("includes a tile piped from a ReadableStream", async () => {
+    const { body } = await archive.getTile(7, 75, 75);
+
+    const buf = Buffer.concat(await toArray(body));
+
+    expect(buf).toEqual(TILE_FIXTURE);
+  })
+
+  test("includes a tile written as a ReadableStream", async () => {
+    const { body } = await archive.getTile(7, 75, 76);
+
+    const buf = Buffer.concat(await toArray(body));
+
+    expect(buf).toEqual(TILE_FIXTURE);
+  })
+
+  test("includes a tile written as a string", async () => {
+    const { body } = await archive.getTile(7, 75, 77);
+
+    const buf = Buffer.concat(await toArray(body));
+
+    expect(buf.toString()).toEqual("tile");
+  })
+
+  test("includes a tile written as an object", async () => {
+    const { body } = await archive.getTile(7, 75, 78);
+
+    const buf = Buffer.concat(await toArray(body));
+
+    expect(JSON.parse(buf.toString())).toEqual({
+      tile: true
+    });
+  })
+});
+
+// describe("Writable Source", () => {
+
+// });
