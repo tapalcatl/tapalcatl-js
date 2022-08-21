@@ -9,3 +9,8 @@ caching) of remote Tapalcatl archives.
 
 The default block size for fetching remote (HTTP(S), S3) sources is 1MB. To
 change it, set `DEFAULT_BLOCK_SIZE` (in bytes) in the server's environment.
+
+## License
+
+tapalcatl-js is availabile under the ISC License. See [LICENSE](LICENSE)
+file for more details
